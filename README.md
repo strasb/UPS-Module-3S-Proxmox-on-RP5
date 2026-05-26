@@ -132,7 +132,7 @@ Quick test of sensor readings:
 
 ```bash
 . .venv/bin/activate
-python3 INA219.py
+python INA219.py
 ```
 
 Press `Ctrl+C` to stop.
@@ -158,7 +158,7 @@ Run manually:
 
 ```bash
 . .venv/bin/activate
-python3 ups_mqtt_publisher.py \
+python ups_mqtt_publisher.py \
 	--mqtt-host 192.168.1.10 \
 	--mqtt-port 1883 \
 	--mqtt-username homeassistant \
@@ -367,6 +367,42 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+```
+
+### `ModuleNotFoundError: No module named 'smbus'`
+If you are using a Python virtual environment, Debian's `python3-smbus` package may not be available inside the venv even if it is installed system-wide.
+
+This project uses `smbus2` for better compatibility with virtual environments.
+
+Install dependencies like this:
+
+```bash
+sudo apt update
+sudo apt install -y python3-full python3-venv python3-pip python3-smbus i2c-tools
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+The INA219 module imports SMBus through:
+
+```python
+import smbus2 as smbus
+```
+
+Run the test with the virtual environment active:
+
+```bash
+. .venv/bin/activate
+python INA219.py
+```
+
+If needed, you can also install `smbus2` directly:
+
+```bash
+. .venv/bin/activate
+python -m pip install smbus2
 ```
 
 ### `ModuleNotFoundError: No module named ...`
