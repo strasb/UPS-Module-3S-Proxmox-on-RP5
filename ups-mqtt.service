@@ -1,0 +1,29 @@
+[Unit]
+Description=Waveshare UPS 3S MQTT Publisher
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/UPS-Module-3S-Proxmox-on-RP5
+Environment=PYTHONUNBUFFERED=1
+Environment=MQTT_HOST=192.168.1.10
+Environment=MQTT_PORT=1883
+Environment=MQTT_USERNAME=homeassistant
+Environment=MQTT_PASSWORD=your_password
+Environment=MQTT_TOPIC=ups/rpi5
+Environment=POLL_INTERVAL=15
+Environment=I2C_BUS=1
+Environment=INA219_ADDR=0x41
+Environment=HA_DISCOVERY=1
+ExecStart=/root/UPS-Module-3S-Proxmox-on-RP5/.venv/bin/python /root/UPS-Module-3S-Proxmox-on-RP5/ups_mqtt_publisher.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
