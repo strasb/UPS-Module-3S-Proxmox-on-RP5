@@ -303,3 +303,123 @@ $$
 $$
 
 For high accuracy, tune this mapping to your specific cell chemistry and discharge curve.
+
+## 10. Troubleshooting
+
+### `i2cdetect -y 1` shows no device
+- Verify the UPS is wired correctly:
+  - `SDA` -> GPIO2 / pin 3
+  - `SCL` -> GPIO3 / pin 5
+  - `GND` -> GND
+  - `5V` -> 5V
+- Confirm I2C is enabled on the Proxmox host.
+- Check host device nodes:
+  ```bash
+  ls -l /dev/i2c-*
+  i2cdetect -l
+  ```
+- Try scanning other visible buses if present:
+  ```bash
+  i2cdetect -y 13
+  i2cdetect -y 14
+  ```
+- The INA219 address for this setup is usually `0x41`.
+
+### LXC shows `Failed to write 'change' ... Read-only file system`
+This is expected in Proxmox LXC when tools try to trigger udev/sysfs changes for host hardware.
+
+It does **not** usually mean I2C access is broken.
+
+Verify normal access instead:
+```bash
+ls -l /dev/i2c-*
+i2cdetect -l
+i2cdetect -y 1
+```
+
+### `/dev/i2c-1` is missing inside the LXC
+Make sure `/etc/pve/lxc/<CTID>.conf` contains:
+```ini
+lxc.cgroup2.devices.allow: c 89:* rwm
+lxc.mount.entry: /dev/i2c-1 dev/i2c-1 none bind,optional,create=file
+```
+
+If needed, also add:
+```ini
+lxc.mount.entry: /dev/i2c-13 dev/i2c-13 none bind,optional,create=file
+lxc.mount.entry: /dev/i2c-14 dev/i2c-14 none bind,optional,create=file
+```
+
+Then fully restart the container:
+```bash
+pct stop <CTID>
+pct start <CTID>
+```
+
+### `externally-managed-environment` when installing Python packages
+Debian 12/13 protects the system Python environment.
+
+Use a virtual environment:
+```bash
+sudo apt update
+sudo apt install -y python3-full python3-venv python3-pip
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+### `ModuleNotFoundError: No module named ...`
+Make sure the virtual environment is active:
+```bash
+. .venv/bin/activate
+```
+
+Then reinstall requirements:
+```bash
+python -m pip install -r requirements.txt
+```
+
+### systemd service starts manually but fails on boot
+Common causes:
+- wrong `WorkingDirectory`
+- wrong Python path
+- MQTT broker not reachable yet
+- virtual environment not used in `ExecStart`
+
+Check service status:
+```bash
+sudo systemctl status ups-mqtt.service
+journalctl -u ups-mqtt.service -f
+```
+
+Make sure `ExecStart` points to the venv Python:
+```bash
+ExecStart=/workspaces/UPS-Module-3S-Proxmox-on-RP5/.venv/bin/python /workspaces/UPS-Module-3S-Proxmox-on-RP5/ups_mqtt_publisher.py
+```
+
+### No MQTT data in Home Assistant
+- Confirm the script is running:
+  ```bash
+  journalctl -u ups-mqtt.service -f
+  ```
+- Check messages directly on the broker:
+  ```bash
+  mosquitto_sub -h <broker-ip> -t 'ups/rpi5/#' -v
+  ```
+- Verify:
+  - broker IP / hostname
+  - username and password
+  - topic prefix
+  - Home Assistant MQTT integration is enabled
+
+### Battery percentage looks inaccurate
+The default battery percentage is only an approximation based on bus voltage.
+
+You may need to tune the voltage-to-percentage mapping for:
+- your exact 18650 cells
+- load conditions
+- charging state
+- real discharge curve
+
+Use the raw voltage values as the main source of truth if percentage appears off.
