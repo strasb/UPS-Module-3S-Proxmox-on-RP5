@@ -1,5 +1,10 @@
 # Waveshare UPS 3S on Raspberry Pi 5 with MQTT and Home Assistant
 
+This has to be run in an LXC container and confirm working with debian_13_trixie_arm64_default.tar.xz
+from https://github.com/oneclickvirt/lxc_arm_images/releases/tag/debian
+
+
+
 This repository provides a practical integration for the Waveshare UPS Module 3S (INA219 over I2C) on Raspberry Pi 5.
 
 It includes:
