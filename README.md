@@ -461,10 +461,13 @@ sudo systemctl status ups-mqtt.service
 journalctl -u ups-mqtt.service -f
 ```
 
-Make sure `ExecStart` points to the venv Python:
+Make sure the service uses the virtualenv Python. In this repository's service file, `ExecStart` points to:
+
 ```bash
-ExecStart=/workspaces/UPS-Module-3S-Proxmox-on-RP5/.venv/bin/python /workspaces/UPS-Module-3S-Proxmox-on-RP5/ups_mqtt_publisher.py
+/root/UPS-Module-3S-Proxmox-on-RP5/.venv/bin/python /root/UPS-Module-3S-Proxmox-on-RP5/ups_mqtt_publisher.py
 ```
+
+If you installed the project somewhere else, update both `WorkingDirectory` and `ExecStart` to match your actual path.
 
 ### No MQTT data in Home Assistant
 - Confirm the script is running:
