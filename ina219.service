@@ -1,0 +1,19 @@
+[Unit]
+Description=INA219 Sensor Monitor
+After=multi-user.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/UPS-Module-3S-Proxmox-on-RP5
+ExecStart=/root/UPS-Module-3S-Proxmox-on-RP5/.venv/bin/python /root/UPS-Module-3S-Proxmox-on-RP5/INA219.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
