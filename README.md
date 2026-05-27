@@ -9,6 +9,7 @@ It includes:
 - INA219 reader (`INA219.py`)
 - MQTT telemetry publisher (`ups_mqtt_publisher.py`)
 - Home Assistant MQTT discovery support (automatic entities)
+- Example systemd service files (`ina219.service` and `ups-mqtt.service`)
 
 ## 1. Hardware and safety
 
@@ -179,49 +180,80 @@ Environment variables are also supported:
 
 ## 6. Run as a systemd service
 
-Create service file:
+This repository includes two example service files:
+- `ups-mqtt.service` for normal MQTT/Home Assistant publishing
+- `ina219.service` for direct sensor output and troubleshooting
+
+### Install `ups-mqtt.service` (recommended)
+
+Copy the service file into systemd:
 
 ```bash
-sudo tee /etc/systemd/system/ups-mqtt.service >/dev/null <<'EOF'
-[Unit]
-Description=Waveshare UPS 3S MQTT Publisher
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/workspaces/UPS-Module-3S-Proxmox-on-RP5
-Environment=MQTT_HOST=192.168.1.10
-Environment=MQTT_PORT=1883
-Environment=MQTT_USERNAME=homeassistant
-Environment=MQTT_PASSWORD=your_password
-Environment=MQTT_TOPIC=ups/rpi5
-Environment=POLL_INTERVAL=15
-Environment=I2C_BUS=1
-Environment=INA219_ADDR=0x41
-Environment=HA_DISCOVERY=1
-ExecStart=/workspaces/UPS-Module-3S-Proxmox-on-RP5/.venv/bin/python /workspaces/UPS-Module-3S-Proxmox-on-RP5/ups_mqtt_publisher.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
+sudo cp ups-mqtt.service /etc/systemd/system/
 ```
 
-Enable and start:
+Edit the MQTT settings if needed:
+
+```bash
+sudo nano /etc/systemd/system/ups-mqtt.service
+```
+
+Typical values to review:
+- `MQTT_HOST`
+- `MQTT_PORT`
+- `MQTT_USERNAME`
+- `MQTT_PASSWORD`
+- `MQTT_TOPIC`
+- `POLL_INTERVAL`
+- `I2C_BUS`
+- `INA219_ADDR`
+- `HA_DISCOVERY`
+
+Reload systemd and enable the service:
 
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now ups-mqtt.service
-sudo systemctl status ups-mqtt.service
 ```
 
-View logs:
+Check status and logs:
 
 ```bash
+sudo systemctl status ups-mqtt.service
 journalctl -u ups-mqtt.service -f
+```
+
+### Install `ina219.service` (optional, mainly for testing)
+
+Copy the service file into systemd:
+
+```bash
+sudo cp ina219.service /etc/systemd/system/
+```
+
+Reload systemd and enable the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now ina219.service
+```
+
+Check status and logs:
+
+```bash
+sudo systemctl status ina219.service
+journalctl -u ina219.service -f
+```
+
+### Recommended usage
+
+For normal operation, enable only `ups-mqtt.service`.
+
+If `ina219.service` was only used for testing, disable it:
+
+```bash
+sudo systemctl stop ina219.service
+sudo systemctl disable ina219.service
 ```
 
 ## 7. Home Assistant integration
