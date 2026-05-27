@@ -10,6 +10,7 @@ It includes:
 - MQTT telemetry publisher (`ups_mqtt_publisher.py`)
 - Home Assistant MQTT discovery support (automatic entities)
 - Example systemd service files (`ina219.service` and `ups-mqtt.service`)
+- Example MQTT environment file (`.env.ups-mqtt.example`)
 
 ## 1. Hardware and safety
 
@@ -184,6 +185,8 @@ This repository includes two example service files:
 - `ups-mqtt.service` for normal MQTT/Home Assistant publishing
 - `ina219.service` for direct sensor output and troubleshooting
 
+The MQTT publisher service reads its configuration from an environment file, so you can keep your broker IP, username, and password in one place.
+
 ### Install `ups-mqtt.service` (recommended)
 
 Copy the service file into systemd:
@@ -192,10 +195,11 @@ Copy the service file into systemd:
 sudo cp ups-mqtt.service /etc/systemd/system/
 ```
 
-Edit the MQTT settings if needed:
+Copy the example environment file and edit it for your setup:
 
 ```bash
-sudo nano /etc/systemd/system/ups-mqtt.service
+sudo cp .env.ups-mqtt.example /etc/default/ups-mqtt
+sudo nano /etc/default/ups-mqtt
 ```
 
 Typical values to review:
@@ -208,6 +212,14 @@ Typical values to review:
 - `I2C_BUS`
 - `INA219_ADDR`
 - `HA_DISCOVERY`
+- `HA_DISCOVERY_PREFIX`
+- `DEVICE_ID`
+
+Restrict permissions on the environment file because it may contain credentials:
+
+```bash
+sudo chmod 600 /etc/default/ups-mqtt
+```
 
 Reload systemd and enable the service:
 
@@ -255,6 +267,8 @@ If `ina219.service` was only used for testing, disable it:
 sudo systemctl stop ina219.service
 sudo systemctl disable ina219.service
 ```
+
+If you installed the project somewhere other than `/root/UPS-Module-3S-Proxmox-on-RP5`, update `WorkingDirectory` and `ExecStart` in the service file to match your actual path.
 
 ## 7. Home Assistant integration
 
@@ -454,6 +468,7 @@ Common causes:
 - wrong Python path
 - MQTT broker not reachable yet
 - virtual environment not used in `ExecStart`
+- missing or incorrect values in `/etc/default/ups-mqtt`
 
 Check service status:
 ```bash
@@ -468,6 +483,8 @@ Make sure the service uses the virtualenv Python. In this repository's service f
 ```
 
 If you installed the project somewhere else, update both `WorkingDirectory` and `ExecStart` to match your actual path.
+
+Make sure `/etc/default/ups-mqtt` exists and contains the expected MQTT settings.
 
 ### No MQTT data in Home Assistant
 - Confirm the script is running:
